@@ -30,6 +30,17 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Configure dry-run mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          normalized="${DRY_RUN:-false}"
+          if [ -z "${TWITTER_CLIENT_ID:-}" ] || [ -z "${TWITTER_REFRESH_TOKEN:-}" ]; then
+            echo "::notice::Учётные данные Twitter отсутствуют, включаю dry-run"
+            normalized="true"
+          fi
+          echo "DRY_RUN=${normalized}" >> "$GITHUB_ENV"
+
       - name: Mask secrets
         shell: bash
         run: |
@@ -48,6 +59,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          is_dry_run="${DRY_RUN,,}"
           declare -A required_groups=(
             [API_ID]="API_ID TELETHON_API_ID"
             [API_HASH]="API_HASH TELETHON_API_HASH"
@@ -60,6 +72,11 @@ jobs:
 
           missing=()
           for key in "${!required_groups[@]}"; do
+            if [ "$is_dry_run" = "true" ]; then
+              if [ "$key" = "TWITTER_CLIENT_ID" ] || [ "$key" = "TWITTER_REFRESH_TOKEN" ]; then
+                continue
+              fi
+            fi
             found=false
             for candidate in ${required_groups[$key]}; do
               if [ -n "${!candidate-}" ]; then

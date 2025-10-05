@@ -25,15 +25,23 @@ class TwitterClient:
     """Публикует твиты и управляет OAuth2-токенами."""
 
     def __init__(self, *, dry_run: bool = False, timeout: float = 10.0) -> None:
-        self.client_id = _get_env(
-            "TWITTER_CLIENT_ID", aliases=("TWITTER_API_KEY",)
-        )
-        self.refresh_token = _get_env(
-            "TWITTER_REFRESH_TOKEN", aliases=("TWITTER_ACCESS_TOKEN",)
-        )
+        self.dry_run = dry_run
+        if self.dry_run:
+            self.client_id = _get_optional_env(
+                "TWITTER_CLIENT_ID", aliases=("TWITTER_API_KEY",)
+            )
+            self.refresh_token = _get_optional_env(
+                "TWITTER_REFRESH_TOKEN", aliases=("TWITTER_ACCESS_TOKEN",)
+            )
+        else:
+            self.client_id = _get_env(
+                "TWITTER_CLIENT_ID", aliases=("TWITTER_API_KEY",)
+            )
+            self.refresh_token = _get_env(
+                "TWITTER_REFRESH_TOKEN", aliases=("TWITTER_ACCESS_TOKEN",)
+            )
         self.redirect_uri = os.getenv("TWITTER_REDIRECT_URI", "https://localhost")
         self.timeout = httpx.Timeout(10.0, read=timeout)
-        self.dry_run = dry_run
         self.logger = get_logger(__name__)
         self._access_token: str | None = None
         self._expires_at: float = 0.0
@@ -163,3 +171,13 @@ def _get_env(name: str, *, aliases: tuple[str, ...] = ()) -> str:
 
     names = " | ".join((name, *aliases))
     raise RuntimeError(f"Не задана переменная окружения из списка: {names}")
+
+
+def _get_optional_env(name: str, *, aliases: tuple[str, ...] = ()) -> str | None:
+    """Возвращает необязательную переменную окружения, если она задана."""
+
+    for candidate in (name, *aliases):
+        value = os.getenv(candidate)
+        if value:
+            return value
+    return None
