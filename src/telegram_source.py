@@ -7,7 +7,7 @@ import os
 from dataclasses import dataclass
 
 from telethon import TelegramClient
-from telethon.errors import FloodWaitError, RpcError
+from telethon.errors import FloodWaitError, RPCError
 from telethon.sessions import StringSession
 from tenacity import (
     AsyncRetrying,
@@ -52,7 +52,7 @@ class TelegramSource:
                 wait=wait_exponential(multiplier=1, min=1, max=60),
                 stop=stop_after_attempt(5),
                 retry=retry_if_exception_type(
-                    (FloodWaitError, RpcError, asyncio.TimeoutError)
+                    (FloodWaitError, RPCError, asyncio.TimeoutError)
                 ),
                 reraise=True,
             ):
