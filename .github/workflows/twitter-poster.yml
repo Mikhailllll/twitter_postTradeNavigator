@@ -15,10 +15,13 @@ jobs:
       TELETHON_API_ID: ${{ secrets.TELETHON_API_ID }}
       TELETHON_API_HASH: ${{ secrets.TELETHON_API_HASH }}
       TELETHON_SESSION: ${{ secrets.TELETHON_SESSION }}
-      TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
-      TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
-      TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-      TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+      API_ID: ${{ secrets.TELETHON_API_ID || secrets.API_ID }}
+      API_HASH: ${{ secrets.TELETHON_API_HASH || secrets.API_HASH }}
+      STRING_SESSION: ${{ secrets.TELETHON_SESSION || secrets.STRING_SESSION }}
+      TELEGRAMCANALISTOCHNIK: ${{ secrets.TELEGRAMCANALISTOCHNIK || vars.TELEGRAMCANALISTOCHNIK || '@binance_announcements' }}
+      TWITTER_CLIENT_ID: ${{ secrets.TWITTER_CLIENT_ID || secrets.TWITTER_API_KEY }}
+      TWITTER_REFRESH_TOKEN: ${{ secrets.TWITTER_REFRESH_TOKEN || secrets.TWITTER_ACCESS_TOKEN }}
+      TWITTER_REDIRECT_URI: ${{ secrets.TWITTER_REDIRECT_URI || vars.TWITTER_REDIRECT_URI || 'https://localhost' }}
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       DRY_RUN: ${{ vars.DRY_RUN || 'false' }}
     steps:
@@ -32,7 +35,8 @@ jobs:
         run: |
           set -euo pipefail
           for var in TELETHON_API_ID TELETHON_API_HASH TELETHON_SESSION \
-            TWITTER_API_KEY TWITTER_API_SECRET TWITTER_ACCESS_TOKEN TWITTER_ACCESS_SECRET \
+            API_ID API_HASH STRING_SESSION TELEGRAMCANALISTOCHNIK \
+            TWITTER_CLIENT_ID TWITTER_REFRESH_TOKEN TWITTER_REDIRECT_URI \
             DEEPSEEK_API_KEY; do
             value="${!var-}"
             if [ -n "$value" ]; then
@@ -44,14 +48,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          declare -A required_groups=(
+            [API_ID]="API_ID TELETHON_API_ID"
+            [API_HASH]="API_HASH TELETHON_API_HASH"
+            [STRING_SESSION]="STRING_SESSION TELETHON_SESSION"
+            [TELEGRAMCANALISTOCHNIK]="TELEGRAMCANALISTOCHNIK"
+            [TWITTER_CLIENT_ID]="TWITTER_CLIENT_ID TWITTER_API_KEY"
+            [TWITTER_REFRESH_TOKEN]="TWITTER_REFRESH_TOKEN TWITTER_ACCESS_TOKEN"
+            [DEEPSEEK_API_KEY]="DEEPSEEK_API_KEY"
+          )
+
           missing=()
-          for var in TELETHON_API_ID TELETHON_API_HASH TELETHON_SESSION \
-            TWITTER_API_KEY TWITTER_API_SECRET TWITTER_ACCESS_TOKEN TWITTER_ACCESS_SECRET \
-            DEEPSEEK_API_KEY; do
-            if [ -z "${!var-}" ]; then
-              missing+=("$var")
+          for key in "${!required_groups[@]}"; do
+            found=false
+            for candidate in ${required_groups[$key]}; do
+              if [ -n "${!candidate-}" ]; then
+                found=true
+                break
+              fi
+            done
+            if [ "$found" = false ]; then
+              missing+=("${required_groups[$key]// /|}")
             fi
           done
+
           if [ "${#missing[@]}" -ne 0 ]; then
             echo "Отсутствуют переменные окружения: ${missing[*]}" >&2
             exit 1

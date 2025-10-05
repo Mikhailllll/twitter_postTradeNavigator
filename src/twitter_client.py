@@ -25,8 +25,12 @@ class TwitterClient:
     """Публикует твиты и управляет OAuth2-токенами."""
 
     def __init__(self, *, dry_run: bool = False, timeout: float = 10.0) -> None:
-        self.client_id = _get_env("TWITTER_CLIENT_ID")
-        self.refresh_token = _get_env("TWITTER_REFRESH_TOKEN")
+        self.client_id = _get_env(
+            "TWITTER_CLIENT_ID", aliases=("TWITTER_API_KEY",)
+        )
+        self.refresh_token = _get_env(
+            "TWITTER_REFRESH_TOKEN", aliases=("TWITTER_ACCESS_TOKEN",)
+        )
         self.redirect_uri = os.getenv("TWITTER_REDIRECT_URI", "https://localhost")
         self.timeout = httpx.Timeout(10.0, read=timeout)
         self.dry_run = dry_run
@@ -149,8 +153,13 @@ class TwitterClient:
             raise
 
 
-def _get_env(name: str) -> str:
-    value = os.getenv(name)
-    if not value:
-        raise RuntimeError(f"Не задана переменная окружения {name}")
-    return value
+def _get_env(name: str, *, aliases: tuple[str, ...] = ()) -> str:
+    """Возвращает значение переменной окружения с поддержкой синонимов."""
+
+    for candidate in (name, *aliases):
+        value = os.getenv(candidate)
+        if value:
+            return value
+
+    names = " | ".join((name, *aliases))
+    raise RuntimeError(f"Не задана переменная окружения из списка: {names}")

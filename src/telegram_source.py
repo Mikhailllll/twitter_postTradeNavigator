@@ -33,9 +33,9 @@ class TelegramSource:
     """Источник сообщений из Telegram-канала Binance."""
 
     def __init__(self, *, timeout: float = 10.0, fetch_limit: int = 50) -> None:
-        self.api_id = int(_get_env("API_ID"))
-        self.api_hash = _get_env("API_HASH")
-        self.string_session = _get_env("STRING_SESSION")
+        self.api_id = int(_get_env("API_ID", aliases=("TELETHON_API_ID",)))
+        self.api_hash = _get_env("API_HASH", aliases=("TELETHON_API_HASH",))
+        self.string_session = _get_env("STRING_SESSION", aliases=("TELETHON_SESSION",))
         self.channel = _get_env("TELEGRAMCANALISTOCHNIK")
         self.timeout = timeout
         self.fetch_limit = fetch_limit
@@ -111,10 +111,13 @@ class TelegramSource:
             await client.disconnect()
 
 
-def _get_env(name: str) -> str:
-    """Возвращает обязательную переменную окружения."""
+def _get_env(name: str, *, aliases: tuple[str, ...] = ()) -> str:
+    """Возвращает обязательную переменную окружения с учётом синонимов."""
 
-    value = os.getenv(name)
-    if not value:
-        raise RuntimeError(f"Не задана переменная окружения {name}")
-    return value
+    for candidate in (name, *aliases):
+        value = os.getenv(candidate)
+        if value:
+            return value
+
+    names = " | ".join((name, *aliases))
+    raise RuntimeError(f"Не задана переменная окружения из списка: {names}")
