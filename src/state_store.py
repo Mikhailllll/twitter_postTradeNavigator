@@ -42,8 +42,27 @@ class StateStore:
             return ProcessingState()
 
         raw = self.path.read_bytes()
-        data = json_lib.loads(raw)
-        return ProcessingState(last_seen_id=int(data.get("last_seen_id", 0)))
+        try:
+            data = json_lib.loads(raw)
+        except (ValueError, TypeError) as error:
+            self.logger.error(
+                "Файл состояния повреждён, восстановление по умолчанию",
+                context={"path": str(self.path), "error": str(error)},
+            )
+            self._write(DEFAULT_STATE)
+            return ProcessingState()
+
+        try:
+            last_seen = int(data.get("last_seen_id", 0))
+        except (TypeError, ValueError) as error:
+            self.logger.error(
+                "Некорректное значение last_seen_id в состоянии",
+                context={"path": str(self.path), "error": str(error)},
+            )
+            self._write(DEFAULT_STATE)
+            return ProcessingState()
+
+        return ProcessingState(last_seen_id=last_seen)
 
     def update_last_seen(self, *, message_id: int, dry_run: bool) -> ProcessingState:
         """Обновляет идентификатор последнего обработанного сообщения."""
