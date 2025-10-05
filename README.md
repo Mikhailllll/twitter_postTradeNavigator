@@ -1,6 +1,6 @@
 # Twitter Post Trade Navigator
 
-Сервис автоматически преобразует объявления из Telegram-канала [@binance_announcements](https://t.me/binance_announcements) и публикует их в Twitter с учётом лимита символов и правил оформления.
+Сервис автоматически преобразует объявления из Telegram-канала [@binance_announcements](https://t.me/binance_announcements) и публикует их в Twitter с учётом лимита символов и правил оформления. Проект рассчитан на Python 3.11+ и использует асинхронные клиенты `httpx`/`Telethon` с ретраями на базе `tenacity`.
 
 ## Возможности
 
@@ -13,7 +13,7 @@
 
 ## Подготовка окружения
 
-1. Установите зависимости:
+1. Установите зависимости (предпочтительно в виртуальной среде):
    ```bash
    python3.11 -m venv .venv
    source .venv/bin/activate
@@ -21,8 +21,8 @@
    ```
 2. Заполните переменные окружения (пример в `.env.example`):
    - `API_ID`, `API_HASH`, `STRING_SESSION`, `TELEGRAMCANALISTOCHNIK`
-   - `DEEPSEEK_API_KEY`
-   - `TWITTER_CLIENT_ID`, `TWITTER_REFRESH_TOKEN`, `TWITTER_REDIRECT_URI`
+   - `DEEPSEEK_API_KEY`, при необходимости переопределите `DEEPSEEK_BASE_URL`
+   - `TWITTER_CLIENT_ID`, `TWITTER_REFRESH_TOKEN`, опционально `TWITTER_REDIRECT_URI`
    - при необходимости настройте `LOG_LEVEL`
 
 Создайте файл `.env` или используйте секреты CI/CD.
@@ -37,10 +37,12 @@ python -m src.main            # полноценный запуск
 ## Тестирование и качество
 
 ```bash
-pytest
+pytest -q
 ruff check src tests
 black --check src tests
 ```
+
+Файл `state.json` создаётся автоматически при первом запуске и хранит идентификатор последнего обработанного сообщения.
 
 ## Структура проекта
 
