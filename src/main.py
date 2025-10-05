@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
 from pathlib import Path
 
 from .deepseek_client import DeepSeekClient
@@ -45,14 +46,29 @@ async def run(*, dry_run: bool) -> None:
             )
 
 
+def _env_dry_run_default() -> bool:
+    """Возвращает значение режима dry-run из переменной окружения."""
+
+    value = os.getenv("DRY_RUN", "false").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Публикация новостей Binance в Twitter"
     )
+    parser.set_defaults(dry_run=_env_dry_run_default())
     parser.add_argument(
         "--dry-run",
+        dest="dry_run",
         action="store_true",
         help="Не отправлять твиты и не сохранять состояние",
+    )
+    parser.add_argument(
+        "--no-dry-run",
+        dest="dry_run",
+        action="store_false",
+        help="Игнорировать переменную окружения DRY_RUN и публиковать твиты",
     )
     return parser.parse_args()
 
