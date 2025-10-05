@@ -22,12 +22,14 @@
 2. Заполните переменные окружения (пример в `.env.example`):
    - `API_ID`, `API_HASH`, `STRING_SESSION`, `TELEGRAMCANALISTOCHNIK`
    - `DEEPSEEK_API_KEY`, при необходимости переопределите `DEEPSEEK_BASE_URL`
-   - `TWITTER_CLIENT_ID`, `TWITTER_REFRESH_TOKEN`, опционально `TWITTER_REDIRECT_URI`
+   - `TWITTER_CLIENT_ID` (или `TWITTER_API_KEY`/`CLIENT_ID`),
+     `TWITTER_REFRESH_TOKEN` (или `TWITTER_ACCESS_TOKEN`/`CLIENT_SECRET`),
+     опционально `TWITTER_REDIRECT_URI`
    - при необходимости настройте `LOG_LEVEL`
 
 Создайте файл `.env` или используйте секреты CI/CD.
 
-> ⚠️ GitHub Actions теперь требует обязательного задания `TWITTER_CLIENT_ID` и `TWITTER_REFRESH_TOKEN` (или одноимённых переменных в разделе **Repository variables**) для продакшн-запусков. При их отсутствии workflow завершится ошибкой вместо автоматического перехода в dry-run.
+> ⚠️ GitHub Actions теперь требует обязательного задания `TWITTER_CLIENT_ID` (либо `TWITTER_API_KEY`/`CLIENT_ID`) и `TWITTER_REFRESH_TOKEN` (либо `TWITTER_ACCESS_TOKEN`/`CLIENT_SECRET`) — в секции Secrets или Repository variables. При их отсутствии workflow завершится ошибкой вместо автоматического перехода в dry-run.
 
 ## Запуск
 

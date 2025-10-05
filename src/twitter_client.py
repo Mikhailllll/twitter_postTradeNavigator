@@ -28,17 +28,19 @@ class TwitterClient:
         self.dry_run = dry_run
         if self.dry_run:
             self.client_id = _get_optional_env(
-                "TWITTER_CLIENT_ID", aliases=("TWITTER_API_KEY",)
+                "TWITTER_CLIENT_ID", aliases=("TWITTER_API_KEY", "CLIENT_ID")
             )
             self.refresh_token = _get_optional_env(
-                "TWITTER_REFRESH_TOKEN", aliases=("TWITTER_ACCESS_TOKEN",)
+                "TWITTER_REFRESH_TOKEN",
+                aliases=("TWITTER_ACCESS_TOKEN", "CLIENT_SECRET"),
             )
         else:
             self.client_id = _get_env(
-                "TWITTER_CLIENT_ID", aliases=("TWITTER_API_KEY",)
+                "TWITTER_CLIENT_ID", aliases=("TWITTER_API_KEY", "CLIENT_ID")
             )
             self.refresh_token = _get_env(
-                "TWITTER_REFRESH_TOKEN", aliases=("TWITTER_ACCESS_TOKEN",)
+                "TWITTER_REFRESH_TOKEN",
+                aliases=("TWITTER_ACCESS_TOKEN", "CLIENT_SECRET"),
             )
         self.redirect_uri = os.getenv("TWITTER_REDIRECT_URI", "https://localhost")
         self.timeout = httpx.Timeout(10.0, read=timeout)
