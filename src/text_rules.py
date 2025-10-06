@@ -6,7 +6,7 @@ import re
 import textwrap
 from collections.abc import Iterable
 
-MAX_TWEET_LENGTH = 280
+MAX_TWEET_LENGTH = 270
 BINANCE_LINKS_BLOCK = (
     "Полезные ссылки Binance:\n"
     "• Биржа: https://www.binance.com\n"
@@ -80,12 +80,15 @@ def build_thread(*, message_id: int, text: str, hashtags: Iterable[str]) -> list
     if not tweets and main_body:
         tweets = [main_body]
 
-    hashtags_line = " ".join(hashtags).strip()
+    safe_hashtags = _fit_hashtags(hashtags)
+    hashtags_line = " ".join(safe_hashtags).strip()
     if hashtags_line and tweets:
         if len(tweets[-1]) + 2 + len(hashtags_line) <= MAX_TWEET_LENGTH:
             tweets[-1] = f"{tweets[-1]}\n\n{hashtags_line}"
         else:
-            tweets.append(hashtags_line)
+            tweets.extend(
+                _chunk_text(hashtags_line) or [hashtags_line[:MAX_TWEET_LENGTH]]
+            )
 
     for tail in _chunk_text(BINANCE_LINKS_BLOCK):
         tweets.append(tail)
@@ -112,12 +115,45 @@ def _chunk_text(text: str) -> list[str]:
         if not lines:
             continue
         for line in lines:
-            if not chunks:
-                chunks.append(line)
-                continue
-            candidate = f"{chunks[-1]}\n\n{line}"
-            if len(candidate) <= MAX_TWEET_LENGTH:
-                chunks[-1] = candidate
-            else:
-                chunks.append(line)
-    return chunks
+            for piece in _split_overflow(line):
+                if not chunks:
+                    chunks.append(piece)
+                    continue
+                candidate = f"{chunks[-1]}\n\n{piece}"
+                if len(candidate) <= MAX_TWEET_LENGTH:
+                    chunks[-1] = candidate
+                else:
+                    chunks.append(piece)
+    return [chunk[:MAX_TWEET_LENGTH] for chunk in chunks]
+
+
+def _fit_hashtags(hashtags: Iterable[str]) -> list[str]:
+    """Ограничивает список хэштегов так, чтобы они помещались в твит."""
+
+    result: list[str] = []
+    current_length = 0
+    for tag in hashtags:
+        tag = tag.strip()
+        if not tag:
+            continue
+        proposed_length = len(tag) if not result else current_length + 1 + len(tag)
+        if proposed_length > MAX_TWEET_LENGTH:
+            break
+        result.append(tag)
+        current_length = len(" ".join(result))
+    return result
+
+
+def _split_overflow(line: str) -> list[str]:
+    """Делит строку, если она превышает лимит Twitter."""
+
+    if len(line) <= MAX_TWEET_LENGTH:
+        return [line]
+
+    pieces: list[str] = []
+    start = 0
+    while start < len(line):
+        end = min(start + MAX_TWEET_LENGTH, len(line))
+        pieces.append(line[start:end])
+        start = end
+    return pieces

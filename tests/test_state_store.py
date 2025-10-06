@@ -36,4 +36,4 @@ def test_state_store_recovers_from_corrupted_file(tmp_path):
     state = store.read()
 
     assert state.last_seen_id == 0
-    assert path.read_text(encoding="utf-8") == "{\"last_seen_id\":0}"
+    assert path.read_text(encoding="utf-8") == '{"last_seen_id":0}'
